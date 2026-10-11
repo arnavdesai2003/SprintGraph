@@ -1,0 +1,1 @@
+{"action":"opened","number":43,"repository":{"full_name":"sprintgraph/demo"},"pull_request":{"title":"Harden retries SG-102","body":"Demo webhook fixture; authoritative data is retrieved through the adapter."}}

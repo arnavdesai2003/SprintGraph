@@ -1,0 +1,71 @@
+name: Validate
+on: [push, pull_request]
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: sprintgraph
+          POSTGRES_USER: sprintgraph
+          POSTGRES_PASSWORD: ci-only-password
+        ports: ['5432:5432']
+        options: --health-cmd="pg_isready -U sprintgraph" --health-interval=5s --health-retries=10
+    env:
+      JWT_SECRET: isolated-ci-signing-secret-over-32-characters
+      DEMO_PASSWORD: isolated-ci-demo-password
+      MODE: demo
+      DATABASE_URL: postgresql+psycopg://sprintgraph:ci-only-password@localhost:5432/sprintgraph
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          if [ -f requirements.lock ]; then
+            pip install -r requirements.lock
+            pip install --no-deps '.[dev]'
+          else
+            pip install '.[dev]'
+          fi
+          pip check
+      - run: ruff check .
+      - run: pytest -q
+      - run: alembic upgrade head
+      - run: python -m app.seed
+      - run: python -m app.evaluate --events 40
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      - run: npm run lint -- --max-warnings=0
+      - run: npm run typecheck
+      - run: npm run build
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/setup_env.py
+      - run: docker compose --profile database-test run --build --rm backend-tests
+      - run: docker compose --profile demo up --build -d
+      - run: docker compose --profile demo --profile test run --build --rm e2e
+      - name: Collect service diagnostics
+        if: failure()
+        run: docker compose logs --no-color --tail=100 backend worker frontend
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-acceptance
+          path: artifacts/e2e
+          if-no-files-found: ignore
