@@ -1,6 +1,5 @@
 # SprintGraph
 
-SprintGraph GitHub integration test for automated pull request analysis.
 
 SprintGraph automates advisory engineering analysis using FastAPI, PostgreSQL, LangGraph and a Next.js dashboard. It includes PR analysis, sprint summaries, evidence-backed blocker detection and deterministic task prioritization. Demo mode works without GitHub, Jira or LLM credentials once dependencies are installed.
 
