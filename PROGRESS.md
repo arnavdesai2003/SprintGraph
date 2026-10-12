@@ -175,3 +175,11 @@ User-run one-shot report passed for Project 2 / GitHub PR 2 using gemini-3.1-fla
 
 ## Phase 5 runtime acceptance complete — 2026-10-12
 Full session access enabled. Agent directly ran the isolated PostgreSQL Compose suite: 136 tests and 24 subtests passed in 12.95s; Ruff passed. Frontend production image build, TypeScript typecheck and ESLint passed without diagnostics. Rebuilt only backend/frontend with --no-deps; both healthy, ordinary live worker remained stopped. Read-only live browser check targeting Gemini result 117 passed (1 test, 644 ms). No new inference/provider workflow was submitted. Existing database, credentials and integration configuration preserved. This completes the Phase 5 local security/dashboard increment; organizational production identity requirements remain separate.
+
+## Phase 6 local hardening acceptance — 2026-10-12
+- Unified dashboard/evaluation nearest-rank percentiles and exposed workflow, latency sample, attempt and manual/automated metrics through the authorized overview API; regression verifies failure/manual accounting.
+- CI now explicitly uses a dedicated PostgreSQL test database for pytest, demo inference and disabled real inference. GitHub-hosted execution remains unverified.
+- Added infra/compose.demo-test.yaml for a separate demo Compose project on ports 3100/8100, preserving live services/database and disabling real inference.
+- Direct Docker suite: 137 tests and 24 subtests passed in 11.90s; Ruff clean. Dedicated demo Chromium suite: all four tests passed in 6.5s. Phase 5 frontend build/typecheck/ESLint remain valid (no frontend changes in this increment).
+- Controlled evaluation with separate demo worker stopped: 400 events succeeded, zero failed/unfinished, P50 1363.055 ms, P95 2444.229 ms, wall 2.764805 s, throughput 144.675671 events/s. Report artifacts/phase6-evaluation.json. An earlier trial overlapped the demo worker and is excluded from reported controlled metrics. These are synthetic mock-provider results, not production/historical productivity evidence.
+- Live worker remained stopped; no real provider/inference calls made. Separate test stack shut down without deleting volumes.

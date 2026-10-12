@@ -26,3 +26,18 @@ python3 scripts/run_evaluation.py --events 400
 ```
 
 The script saves the new measured report to `evaluation-report.json`, adding a new batch without consuming unrelated pending events. For comparisons, retain each report under a distinct filename with `--output`, record the database state and hardware, and compare source hashes/configuration. Synthetic source fixtures and deterministic model outputs are versioned in the repository. Provider behavior, database state and environment changes affect timings.
+
+## Controlled Phase 6 run — 2026-10-12
+Agent-run separate demo stack: 400/400 events succeeded, no failed/unfinished events. Worker stopped during evaluation. P50 1363.055 ms; P95 2444.229 ms; wall duration 2.764805 seconds; throughput 144.675671 events/second. Local report: artifacts/phase6-evaluation.json. This run occurred after browser acceptance and an excluded concurrent trial; database was not fresh. No live provider or model request was made.
+
+Reproduce with a distinct Compose project (requires Docker Compose support for !override):
+
+```sh
+docker compose -p sprintgraph-validation -f compose.yaml -f infra/compose.demo-test.yaml --profile demo up --build -d
+docker compose -p sprintgraph-validation -f compose.yaml -f infra/compose.demo-test.yaml --profile demo --profile test run --build --rm e2e
+docker compose -p sprintgraph-validation -f compose.yaml -f infra/compose.demo-test.yaml stop worker
+docker compose -p sprintgraph-validation -f compose.yaml -f infra/compose.demo-test.yaml exec -T backend python -m app.evaluate --events 400 --output /tmp/evaluation.json
+docker compose -p sprintgraph-validation -f compose.yaml -f infra/compose.demo-test.yaml down
+```
+
+Copy the report before shutting down. Volumes are preserved by down without -v. This stack uses demo mode even when the existing .env selects live providers.

@@ -1,7 +1,5 @@
 import json
 import uuid
-from collections import Counter
-from datetime import timezone
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -14,6 +12,7 @@ from app.models import (User, Project, EngineeringEvent, WorkflowExecution, Pull
 from app.security.webhooks import github_signature_valid, shared_secret_valid
 from app.security.auth import current_user, admin, passwords, token, project_for
 from app.services.events import ingest
+from app.services.metrics import summarize_events
 router = APIRouter()
 
 class Login(BaseModel):
@@ -72,13 +71,13 @@ def run(project_id: int, body: RunRequest, user: User = Depends(current_user), d
 def overview(project_id: int, user: User = Depends(current_user), db: Session = Depends(session)):
     project_for(db, user, project_id)
     events = db.scalars(select(EngineeringEvent).where(EngineeringEvent.project_id == project_id)).all()
-    statuses = Counter(e.status for e in events)
-    latencies = sorted(((e.completed_at.replace(tzinfo=timezone.utc) - e.created_at.replace(tzinfo=timezone.utc)).total_seconds() * 1000) for e in events if e.completed_at)
-    def percentile(p):
-        return latencies[min(len(latencies) - 1, int((len(latencies) - 1) * p))] if latencies else None
-    return {'total_events': len(events), 'statuses': statuses, 'p50_latency_ms': percentile(.5), 'p95_latency_ms': percentile(.95),
-            'automated_events': sum(e.handling == 'automated' for e in events), 'measurement_mode': settings().mode,
-            'llm_provider': settings().llm_provider}
+    metrics = summarize_events([{'status': e.status, 'handling': e.handling, 'attempts': e.attempts,
+        'event_type': e.event_type, 'created_at': e.created_at, 'completed_at': e.completed_at} for e in events])
+    statuses = {status: sum(e.status == status for e in events) for status in sorted({e.status for e in events})}
+    return {'total_events': metrics['events'], 'statuses': statuses,
+            'p50_latency_ms': metrics['p50_end_to_end_ms'], 'p95_latency_ms': metrics['p95_end_to_end_ms'],
+            'automated_events': metrics['automated'], 'measurement_mode': settings().mode,
+            'llm_provider': settings().llm_provider, 'metrics': metrics}
 
 @router.get('/projects/{project_id}/activity')
 def activity(project_id: int, user: User = Depends(current_user), db: Session = Depends(session)):

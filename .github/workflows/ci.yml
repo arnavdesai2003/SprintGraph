@@ -7,7 +7,7 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_DB: sprintgraph
+          POSTGRES_DB: sprintgraph_test
           POSTGRES_USER: sprintgraph
           POSTGRES_PASSWORD: ci-only-password
         ports: ['5432:5432']
@@ -16,7 +16,10 @@ jobs:
       JWT_SECRET: isolated-ci-signing-secret-over-32-characters
       DEMO_PASSWORD: isolated-ci-demo-password
       MODE: demo
-      DATABASE_URL: postgresql+psycopg://sprintgraph:ci-only-password@localhost:5432/sprintgraph
+      LLM_PROVIDER: demo
+      LLM_INFERENCE_ENABLED: 'false'
+      SPRINTGRAPH_TEST_DATABASE_URL: postgresql+psycopg://sprintgraph:ci-only-password@localhost:5432/sprintgraph_test
+      DATABASE_URL: postgresql+psycopg://sprintgraph:ci-only-password@localhost:5432/sprintgraph_test
     defaults:
       run:
         working-directory: backend

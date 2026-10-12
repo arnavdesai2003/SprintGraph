@@ -1,0 +1,27 @@
+services:
+  backend:
+    environment:
+      MODE: demo
+      LLM_PROVIDER: demo
+      LLM_INFERENCE_ENABLED: 'false'
+    ports: !override ['127.0.0.1:8100:8000']
+  worker:
+    environment:
+      MODE: demo
+      LLM_PROVIDER: demo
+      LLM_INFERENCE_ENABLED: 'false'
+  migrate:
+    environment:
+      MODE: demo
+      LLM_PROVIDER: demo
+      LLM_INFERENCE_ENABLED: 'false'
+  seed:
+    environment:
+      MODE: demo
+      LLM_PROVIDER: demo
+      LLM_INFERENCE_ENABLED: 'false'
+  frontend:
+    ports: !override ['127.0.0.1:3100:3000']
+  e2e:
+    volumes: !override
+      - ./artifacts/phase6-e2e:/artifacts

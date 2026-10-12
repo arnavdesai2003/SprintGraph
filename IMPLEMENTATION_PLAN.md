@@ -46,3 +46,6 @@ Implement live integrations with demo inference, observed node audits and disabl
 
 ## Phase 5 active increment
 Require exp/sub claims and valid positive user subjects, reject unknown database roles, audit successful login without credential data, verify role revocation and organization isolation, and provide safe dashboard errors for non-JSON API failures. Existing six dashboard pages and RBAC remain in place. Increment complete: agent-run isolated PostgreSQL suite (136 tests and 24 subtests), Ruff, production build, typecheck, ESLint and read-only browser regression passed. No real inference or provider mutation is needed for validation.
+
+## Phase 6 local acceptance
+Complete for local MVP: 137 PostgreSQL tests plus 24 subtests, Ruff, four isolated demo browser tests and controlled 400-event synthetic evaluation passed. Dashboard/evaluation metrics agree. CI uses PostgreSQL explicitly; remote Actions execution remains unverified until changes are pushed and its run is inspected. Reproduce isolated demo validation with infra/compose.demo-test.yaml; do not evaluate the live deployment.
