@@ -15,12 +15,16 @@ def token(user: User):
                       settings().jwt_secret, algorithm='HS256')
 def current_user(auth: HTTPAuthorizationCredentials | None = Depends(bearer), db: Session = Depends(session)):
     try:
-        claims = jwt.decode(auth.credentials if auth else '', settings().jwt_secret, algorithms=['HS256'])
-        user = db.get(User, int(claims['sub']))
-        if not user:
+        claims = jwt.decode(auth.credentials if auth else '', settings().jwt_secret, algorithms=['HS256'],
+                            options={'require': ['sub', 'exp']})
+        subject = claims['sub']
+        if not isinstance(subject, str) or not subject.isascii() or not subject.isdecimal() or int(subject) < 1:
+            raise ValueError()
+        user = db.get(User, int(subject))
+        if not user or user.role not in {'admin', 'developer'}:
             raise ValueError()
         return user
-    except (jwt.PyJWTError, ValueError, KeyError):
+    except (jwt.PyJWTError, ValueError, KeyError, TypeError, OverflowError):
         raise HTTPException(401, 'Authentication required') from None
 
 def admin(user: User = Depends(current_user)):

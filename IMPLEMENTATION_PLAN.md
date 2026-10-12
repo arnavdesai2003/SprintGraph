@@ -5,8 +5,8 @@
 | 1 | Repository, application scaffolds, Docker, health checks, setup docs | Complete: application foundation verified and Git initialized in the user terminal. |
 | 2 | Schemas, migrations, seed fixtures, verified ingestion, persistence, deduplication | Complete: schemas, seed, ingestion and deduplication verified; all 51 PostgreSQL tests and Ruff passed. |
 | 3 | Typed executable LangGraph and four workflows | Complete: 77 PostgreSQL tests, Ruff, rebuilt demo and deployed end-to-end verification passed. |
-| 4 | Demo/live GitHub and Jira adapters | Complete for local MVP: 99 tests plus 12 subtests, Ruff, rebuilt demo verification and read-only adapter check passed. Real-provider connectivity remains unverified. |
-| 5 | Authentication, RBAC, audit logs and API-backed dashboard | Local demo API/browser acceptance passed. Production identity hardening remains separate. |
+| 4 | Demo/live GitHub and Jira adapters | Complete for local MVP: 99 tests plus 12 subtests, Ruff, rebuilt demo verification and read-only adapter check passed. Live GitHub/Jira connectivity and read-only PR/sprint workflows verified; one Gemini PR analysis and browser display also passed. |
+| 5 | Authentication, RBAC, audit logs and API-backed dashboard | Complete for local MVP: 136 PostgreSQL tests plus 24 subtests, Ruff, frontend build/typecheck/lint and read-only live browser acceptance passed. Production identity hardening remains separate. |
 | 6 | Tests, CI, observability and evaluation | 99 PostgreSQL backend tests plus 12 subtests, four browser tests, Ruff and measured 400-event synthetic run passed. CI itself has not run. |
 
 Implementation advanced through the phases before this explicit acceptance audit. Do not redo verified code or infer live production verification from demo results. No public deployment, paid infrastructure or external mutations.
@@ -43,3 +43,6 @@ User-run suite passed 99 tests and 12 subtests in 7.97s, with clean Ruff. Rebuil
 
 ## Current increment: real-data LangGraph acceptance
 Implement live integrations with demo inference, observed node audits and disabled real inference. Validate actual API/worker/PostgreSQL/dashboard results for project 2, PR 2 and sprint 3 without external mutations or database reset. Real workflow acceptance passed for events 433–435 and the live browser test passed in 675ms. Updated full backend regression-suite/Ruff acceptance remains pending its separate result. Real inference remains disabled.
+
+## Phase 5 active increment
+Require exp/sub claims and valid positive user subjects, reject unknown database roles, audit successful login without credential data, verify role revocation and organization isolation, and provide safe dashboard errors for non-JSON API failures. Existing six dashboard pages and RBAC remain in place. Increment complete: agent-run isolated PostgreSQL suite (136 tests and 24 subtests), Ruff, production build, typecheck, ESLint and read-only browser regression passed. No real inference or provider mutation is needed for validation.

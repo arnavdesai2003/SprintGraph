@@ -49,6 +49,9 @@ def login(body: Login, db: Session = Depends(session)):
     encoded = user.password_hash if user else passwords.hash('non-user-dummy-password')
     if not passwords.verify(body.password, encoded) or not user:
         raise HTTPException(401, 'Invalid credentials')
+    db.add(AuditLog(organization_id=user.organization_id, actor_id=user.id,
+                   action='auth.login', details={}))
+    db.commit()
     return {'access_token': token(user), 'token_type': 'bearer'}
 
 @router.get('/auth/me')

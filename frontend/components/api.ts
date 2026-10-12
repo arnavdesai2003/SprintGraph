@@ -1,9 +1,11 @@
 export const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 export async function api<T>(path: string, token: string, init: RequestInit = {}): Promise<T> {
     const response = await fetch(API + path, { ...init, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init.headers } });
-    const body = await response.json();
+    const body = await response.json().catch(() => null);
     if (!response.ok)
-        throw new Error(typeof body.detail === 'string' ? body.detail : `Request failed (${response.status})`);
+        throw new Error(typeof body?.detail === 'string' ? body.detail : `Request failed (${response.status})`);
+    if (body === null)
+        throw new Error('The server returned an invalid response. Try again.');
     return body as T;
 }
 export type Analysis = {
