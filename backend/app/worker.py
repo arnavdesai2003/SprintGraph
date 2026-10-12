@@ -6,6 +6,7 @@ from sqlalchemy import select
 from app.config import settings
 from app.db import Session
 from app.agents.workflows import graph, validate
+from app.agents.tracing import node_trace
 from app.integrations.clients import ProviderError
 from pydantic import ValidationError
 from app.models import (EngineeringEvent, WorkflowExecution, Project, PullRequestAnalysis, SprintSummary,
@@ -14,11 +15,13 @@ from app.services.events import retry_delay
 logger = logging.getLogger('sprintgraph.worker')
 RESULTS = {'pull_request': PullRequestAnalysis, 'sprint_summary': SprintSummary, 'blockers': DetectedBlocker, 'priorities': TaskPriorityRecommendation}
 
-async def process_once(*, delivery_prefix: str | None = None):
+async def process_once(*, delivery_prefix: str | None = None, event_id: int | None = None):
     with Session() as db:
         # One worker, database claims; SKIP LOCKED permits later multi-worker expansion.
         query = select(EngineeringEvent).where(
             EngineeringEvent.status.in_(['pending', 'retry']), EngineeringEvent.available_at <= now())
+        if event_id is not None:
+            query = query.where(EngineeringEvent.id == event_id)
         if delivery_prefix is not None:
             query = query.where(EngineeringEvent.source == 'evaluation',
                                 EngineeringEvent.delivery_id.startswith(delivery_prefix, autoescape=True))
@@ -33,6 +36,8 @@ async def process_once(*, delivery_prefix: str | None = None):
         db.commit()
         start = time.perf_counter()
         project = db.get(Project, event.project_id)
+        trace = []
+        trace_token = node_trace.set(trace)
         try:
             state = await asyncio.wait_for(
                 graph.ainvoke({'event_type': event.event_type, 'payload': event.payload, 'project': project}),
@@ -60,13 +65,21 @@ async def process_once(*, delivery_prefix: str | None = None):
                         'provider' if isinstance(exc, ProviderError) else
                         'validation' if isinstance(exc, (ValidationError, ValueError)) else 'execution')
             event.error = execution.error = f'Workflow failed ({category}); inspect server diagnostics'
-            event.status = 'retry' if event.attempts < settings().max_attempts else 'failed'
-            event.available_at = now() + retry_delay(event.attempts)
+            retryable = not isinstance(exc, ProviderError) or exc.retryable
+            event.status = 'retry' if retryable and event.attempts < settings().max_attempts else 'failed'
+            delay = retry_delay(event.attempts)
+            if isinstance(exc, ProviderError) and exc.retry_after is not None:
+                delay = max(delay, timedelta(seconds=exc.retry_after))
+            event.available_at = now() + delay
             if event.status == 'failed':
                 event.completed_at = now()
+        finally:
+            node_trace.reset(trace_token)
         execution.duration_ms = (time.perf_counter() - start) * 1000
         db.add(AuditLog(organization_id=project.organization_id, action='workflow.' + execution.status,
-                       details={'event_id': event.id, 'execution_id': execution.id}))
+                       details={'event_id': event.id, 'execution_id': execution.id, 'nodes': trace,
+                                'integration_mode': settings().mode, 'llm_provider': settings().llm_provider,
+                                'llm_inference_enabled': settings().llm_inference_enabled}))
         db.commit()
         return True
 

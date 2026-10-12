@@ -17,3 +17,4 @@ verification-report.json
 artifacts/
 e2e/playwright-report/
 e2e/test-results/
+live-workflow-report.json

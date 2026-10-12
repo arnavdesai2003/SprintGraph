@@ -74,15 +74,20 @@ def overview(project_id: int, user: User = Depends(current_user), db: Session = 
     def percentile(p):
         return latencies[min(len(latencies) - 1, int((len(latencies) - 1) * p))] if latencies else None
     return {'total_events': len(events), 'statuses': statuses, 'p50_latency_ms': percentile(.5), 'p95_latency_ms': percentile(.95),
-            'automated_events': sum(e.handling == 'automated' for e in events), 'measurement_mode': settings().mode}
+            'automated_events': sum(e.handling == 'automated' for e in events), 'measurement_mode': settings().mode,
+            'llm_provider': settings().llm_provider}
 
 @router.get('/projects/{project_id}/activity')
 def activity(project_id: int, user: User = Depends(current_user), db: Session = Depends(session)):
-    project_for(db, user, project_id)
+    project = project_for(db, user, project_id)
     events = db.scalars(select(EngineeringEvent).where(EngineeringEvent.project_id == project_id).order_by(EngineeringEvent.id.desc()).limit(200)).all()
+    traces = {a.details['execution_id']: a.details for a in db.scalars(select(AuditLog).where(
+        AuditLog.organization_id == project.organization_id,
+        AuditLog.action.in_(['workflow.succeeded', 'workflow.failed']),
+        AuditLog.details['event_id'].as_integer().in_([event.id for event in events]))) if 'execution_id' in a.details}
     return [{'id': e.id, 'workflow': e.event_type, 'source': e.source, 'status': e.status, 'attempts': e.attempts,
              'created_at': e.created_at, 'completed_at': e.completed_at, 'error': e.error,
-             'executions': [{'id': x.id, 'status': x.status, 'duration_ms': x.duration_ms, 'error': x.error, 'result': x.result} for x in db.scalars(select(WorkflowExecution).where(WorkflowExecution.event_id == e.id))]} for e in events]
+             'executions': [{'id': x.id, 'status': x.status, 'duration_ms': x.duration_ms, 'error': x.error, 'result': x.result, 'trace': traces.get(x.id)} for x in db.scalars(select(WorkflowExecution).where(WorkflowExecution.event_id == e.id))]} for e in events]
 
 @router.get('/projects/{project_id}/results/{kind}')
 def results(project_id: int, kind: Literal['pull_request', 'sprint_summary', 'blockers', 'priorities'], user: User = Depends(current_user), db: Session = Depends(session)):
@@ -94,6 +99,8 @@ def results(project_id: int, kind: Literal['pull_request', 'sprint_summary', 'bl
 def configuration(user: User = Depends(admin), db: Session = Depends(session)):
     c = settings()
     return {'mode': c.mode, 'llm_provider': c.llm_provider, 'llm_model': c.llm_model,
+            'llm_inference_enabled': c.llm_inference_enabled,
+            'llm_ready': bool(c.llm_api_key and c.llm_model and c.llm_base_url),
             'github_configured': bool(c.github_token), 'jira_configured': bool(c.jira_url and c.jira_token and c.jira_email),
             'external_actions': 'Read-only integrations; no external mutation tools are enabled',
             'users': [{'id': u.id, 'email': u.email, 'role': u.role} for u in db.scalars(select(User).where(User.organization_id == user.organization_id))]}

@@ -1,7 +1,7 @@
 # SprintGraph progress
 
 ## Current status
-The local demo MVP acceptance checks are complete: healthy Docker services, migrations and seeding, development authentication/RBAC, verified ingestion, all four LangGraph workflows, persisted dashboard results, audit records, 77 PostgreSQL backend tests, frontend build/typecheck, and four real-service browser tests passed. ESLint passed with zero errors; its two configuration warnings were corrected in source. Dependency snapshots were captured and validated through locked rebuilds. A 400-event synthetic demo evaluation completed successfully; observed measurements are documented in docs/evaluation.md.
+The local demo MVP acceptance checks are complete: healthy Docker services, migrations and seeding, development authentication/RBAC, verified ingestion, all four LangGraph workflows, persisted dashboard results, audit records, 99 PostgreSQL backend tests plus 12 subtests, frontend build/typecheck, and four real-service browser tests passed. ESLint passed with zero errors; its two configuration warnings were corrected in source. Dependency snapshots were captured and validated through locked rebuilds. A 400-event synthetic demo evaluation completed successfully; observed measurements are documented in docs/evaluation.md.
 
 ## Implemented
 - Modular FastAPI/Next.js monorepo, health/readiness endpoints, Docker images and Compose with PostgreSQL, migrations, seed, API, worker and frontend services.
@@ -31,7 +31,7 @@ Dependency locks are now captured. Frontend/backend locked rebuilds passed; the 
 
 
 ## Known limitations
-Local authentication requires organizational OIDC/session hardening before production. Single-worker recovery lacks heartbeat/fencing and node checkpointing. Provider retry windows do not honor Retry-After/reset headers. Live Jira custom status/severity mapping needs installation-specific configuration. No project provisioning UI exists yet. Browser E2E coverage passed locally; CI execution is not yet verified. Historical 41% automation across 537+ events remains unverified.
+Local authentication requires organizational OIDC/session hardening before production. Single-worker recovery lacks heartbeat/fencing and node checkpointing. LLM retry windows do not honor rate-limit headers. Live Jira mappings require installation-specific configuration; GitHub/Jira header scheduling and mapping support passed Phase 4 local acceptance. No project provisioning UI exists yet. Browser E2E coverage passed locally; CI execution is not yet verified. Historical 41% automation across 537+ events remains unverified.
 
 ## Frontend validation milestone
 - User-run Docker build-stage image build succeeded.
@@ -106,3 +106,63 @@ Local authentication requires organizational OIDC/session hardening before produ
 - Directly inspected verification-report.json and confirmed the nine checks, demo mode and event IDs 423–427.
 - Combined with **77 PostgreSQL tests in 6.41s**, clean Ruff and the rebuilt demo deployment, Phase 3 is complete.
 - Next phase: audit and harden demo/live GitHub and Jira adapters and provider error handling. Live credentials and real-provider acceptance remain separate.
+
+## Phase 4 implementation increment (container acceptance pending)
+- Audited official GitHub/Jira API references. GitHub now validates metadata counts and rejects incomplete data or PRs above the 250-commit/3,000-file endpoint limits.
+- Added enhanced Jira continuation-token pagination and an explicit legacy offset compatibility mode. Offsets advance by actual page size; missing/repeated tokens, stalled pages and duplicate issue keys fail visibly.
+- Added explicit selection for parallel active sprints, configurable Jira status/severity maps, tenant URL validation and redirect rejection.
+- Provider failures now carry safe retry eligibility and bounded Retry-After/reset delays. Worker persists delays without blocking other queue entries; permanent provider errors finish immediately.
+- Added a read-only integration smoke-check CLI and docs/integrations.md with live setup, limits and compatibility requirements. Demo Mode remains credential-free.
+- **19 live-adapter mocked HTTP unit tests passed offline**, as did the existing demo integration check script and Python compilation. Three new persisted-worker integration tests and the full PostgreSQL suite remain pending Docker validation. Live credentials were not used and real-provider connectivity is not claimed.
+
+### Phase 4 validation attempt
+- Repeated the 19 mocked HTTP adapter tests and eight scoring tests: all passed. Existing demo/provider integration check script passed; Python compilation and git diff --check passed.
+- Directly attempted the full database-test Docker command; it exited 1 because this session is denied access to the Docker socket. The three new persisted-worker tests, full Ruff suite and rebuilt-stack acceptance are therefore not yet claimed.
+
+## Phase 4 local MVP acceptance complete
+- User-run dedicated PostgreSQL suite: **99 passed, 12 subtests passed in 7.97s**. Ruff: **All checks passed**.
+- Updated demo Compose rebuild/startup succeeded, with healthy database/backend, frontend running and migration exited successfully.
+- Updated deployed verifier passed all nine checks; events **428–432** succeeded on their first attempt with persisted results and completion audits. Directly inspected verification-report.json to confirm the checks, demo mode and event IDs.
+- Read-only adapter CLI succeeded in Demo Mode for project 1: PR 42, two files, one commit; sprint demo-sprint-12, four issues; read_only=true and llm_calls=0.
+- Phase 4 is complete for the local MVP. GitHub/Jira live HTTP paths are covered by mocked responses; real-provider connectivity is not claimed.
+- Next: Phase 5 audit of authentication, RBAC, audit logs and dashboard interactions.
+
+## Live connection diagnosis increment
+- User switched to Live Mode and recreated backend/worker successfully. The combined live adapter check returned HTTP 404; its failing provider was not identified, so live connectivity remains unverified.
+- Added --provider github/jira/all selection to the read-only check and provider-stage error labels, retaining retry eligibility/delay metadata. Jira checks do not require a PR number or successful GitHub connection.
+- Six offline check-CLI unit tests passed; Python compilation and git diff --check passed. Full updated container tests and the live diagnosis commands remain pending.
+
+## Live data / demo inference verification increment (runtime acceptance pending)
+- Operator reports successful live GitHub/Jira reads for project 2, arnavdesai2003/SprintGraph PR 2, SPRIN board 2 and sprint 3. This is retrieval evidence, not yet workflow/browser acceptance.
+- Inspected actual API triggers, graph, worker, persistence and dashboard queries. Removed the coupling that rejected live data with demo inference; added default-disabled LLM_INFERENCE_ENABLED gating for real model requests. Updated only LLM_PROVIDER=demo and LLM_INFERENCE_ENABLED=false in private .env, preserving other settings.
+- Added observed node durations/statuses to persisted attempt audits, including failure paths and data/model configuration. Activity API and dashboard expose paths and show inference mode separately.
+- Added a trusted local verifier for real HTTP triggers, PostgreSQL results, node audits, webhook deduplication and available RBAC boundaries, plus a read-only real-service browser verifier without seeding.
+- Added automated live-adapter-to-graph/API/database tests with mocked HTTP, failure traces, deduplication/RBAC and forbidden paid inference. Compatible model preparation is tested with mocked responses only.
+- Offline: three trace tests and nineteen adapter HTTP tests passed; Python compilation, modified TypeScript syntax/transpilation and Compose profile configuration parse passed. Full type checking, updated PostgreSQL tests/Ruff and browser execution are not claimed.
+- Direct attempts to run Docker tests, rebuild services, execute the real verifier and obtain the browser session were blocked by Docker socket permissions. No real workflow event, result, browser pass or paid model request is claimed from this session.
+
+## Real-data workflow and browser acceptance passed (2026-10-12)
+- User-run app.verify_live for project 2, PR 2 and sprint 3 passed all checks. Events **433–435** progressed pending/running to succeeded: manual PR analysis, manual sprint summary and one signed PR delivery (the repeated delivery was deduplicated).
+- Verified actual classify → collect → pull_request/sprint_summary → validate observations, PostgreSQL event/attempt/result records, completion audits and dashboard API results. Anonymous access, Developer Admin restrictions and available organization boundaries passed.
+- Running API/worker used live integrations with demo inference; paid inference disabled. No external provider mutations or database reset occurred.
+- User-run real-service Chromium acceptance: **1 passed in 675ms** (test body 384ms), verifying persisted PR/sprint display and observed node traces. Directly inspected artifacts/live-e2e/test-results/.last-run.json: passed, no failed tests. Browser runner locked npm-ci rebuild succeeded.
+- No failures were reported in these two acceptance runs. Failure-path regression tests are implemented, but the updated full PostgreSQL pytest/Ruff result has not yet been supplied; the last confirmed full suite remains 99 tests plus 12 subtests from Phase 4.
+- OpenAI-compatible inference remains prepared and disabled. No paid inference or real-model quality/cost acceptance is claimed.
+
+## Gemini preparation — 2026-10-12
+- Extracted compatible inference into agents/inference.py; configured only four nonsecret local LLM flags for Gemini 3.1 Flash-Lite, preserving the API key and integration settings. Inference remains disabled.
+- Added zero-network `python -m app.agents.check`; local validation passed (key present, disabled, no fallback). Key validity and billing remain unverified.
+- Eight mocked Gemini unittest cases passed: request contract, validated JSON, disabled guard, configuration safety, auth/parameter failures, 429/503 delay, timeout, malformed/extra output. Full Docker PostgreSQL/Ruff checks attempted but blocked by Docker socket permission.
+- No live model call, database reset, provider mutation or service recreation performed. Activation awaits user approval after full checks. See docs/gemini.md.
+
+### Gemini test assertion repair — 2026-10-12
+User container run: 122 passed, 24 subtests passed, one outdated connection-error assertion failed. Updated test_failed_ai_request to assert the specific safe connection message, retryability and exclusion of private diagnostics/API key. Eight offline Gemini tests passed again. Full container rerun attempted but Docker socket access remains denied in this session; final PostgreSQL suite/Ruff outcome pending. Inference remains disabled.
+
+### Single Gemini acceptance tooling — 2026-10-12
+User reports Docker tests run and explicitly enabled inference. Added app.verify_gemini: authenticated PR-only event, worker event-ID isolation, process-local one-attempt limit, exact Gemini endpoint/model guard, one counted request and exclusive local report to refuse accidental repeats. Checks graph trace, PostgreSQL result/status, audit and dashboard API. Browser runner accepts --gemini-result-id to retrieve the exact saved analysis without submitting workflows. Added targeted-worker isolation regression test. Python compilation, eight offline Gemini tests and diff checks passed; Docker socket remains denied, so new container regression and real acceptance/browser execution remain pending. No real model request made by this session.
+
+### Gemini verifier diagnostics repair — 2026-10-12
+User one-shot command stopped without identifying its preflight cause. Added --diagnose (read-only config flags, key presence, report metadata, running event IDs; no inference/submission) and specific safe configuration/existing-report failure messages. Preserve one-shot marker and never automatically resubmit. Added mocked diagnostics/privacy and CLI error regression tests; compilation and diff checks passed, container execution pending due to session Docker access restriction. Actual request count and real acceptance remain unknown until the container report is inspected.
+
+### Gemini real-data acceptance complete — 2026-10-12
+User-run one-shot report passed for Project 2 / GitHub PR 2 using gemini-3.1-flash-lite: exactly one counted inference request, event 436 succeeded, execution 436, persisted PR result 117. Observed classify → collect → pull_request → validate nodes all succeeded; verifier confirmed PostgreSQL result, workflow audit and dashboard API retrieval. After starting the stopped frontend, read-only Chromium acceptance with --gemini-result-id 117 passed (1 test, 739 ms; test body 367 ms), confirming persisted analysis display and observed trace. No additional workflow was submitted by browser verification. Ordinary worker should remain stopped until further inference is authorized. User reports Docker tests completed; exact final suite counts not supplied. Google billing/free-tier status was not independently verified.

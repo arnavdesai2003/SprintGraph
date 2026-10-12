@@ -4,7 +4,7 @@ SprintGraph GitHub integration test for automated pull request analysis.
 
 SprintGraph automates advisory engineering analysis using FastAPI, PostgreSQL, LangGraph and a Next.js dashboard. It includes PR analysis, sprint summaries, evidence-backed blocker detection and deterministic task prioritization. Demo mode works without GitHub, Jira or LLM credentials once dependencies are installed.
 
-**Status:** Local demo MVP verified. Docker services, migrations/seeding, all four workflows, authentication/RBAC, signed/deduplicated ingestion, persisted results and audit records passed acceptance. Backend: **51 PostgreSQL tests passed**, Ruff passed. Frontend build/typecheck passed; ESLint had zero errors and two now-corrected configuration warnings. Browser acceptance: **4 Playwright tests passed**. Reports: `verification-report.json` and `artifacts/e2e/playwright-report/index.html`. Live integrations and historical productivity claims remain unverified. See PROGRESS.md.
+**Status:** Local demo MVP verified. Docker services, migrations/seeding, all four workflows, authentication/RBAC, signed/deduplicated ingestion, persisted results and audit records passed acceptance. Backend: **99 PostgreSQL tests and 12 subtests passed**, Ruff passed. Frontend build/typecheck passed; ESLint had zero errors and two now-corrected configuration warnings. Browser acceptance: **4 Playwright tests passed**. Reports: `verification-report.json` and `artifacts/e2e/playwright-report/index.html`. Live GitHub/Jira PR and sprint workflows passed with demo inference, including browser display. Real model inference and historical productivity claims remain unverified. See PROGRESS.md.
 
 ## Start locally on macOS
 
@@ -108,11 +108,11 @@ Provision a fresh organization, administrator and project through the local oper
 docker compose exec backend python -m app.provision --organization "Engineering" --email "you@example.com" --repository "your-owner/your-repo" --jira-key "TEAM" --board-id 12
 ```
 
-Use your actual repository, Jira project key and board ID. This command preserves existing organizations and rejects duplicate emails/repositories. A project setup UI is not yet included. Set MODE=live, GITHUB_TOKEN (read access to the configured repository), GITHUB_WEBHOOK_SECRET, JIRA_URL (HTTPS Jira Cloud site), JIRA_EMAIL, JIRA_TOKEN, JIRA_WEBHOOK_SECRET, LLM_PROVIDER=openai-compatible, LLM_API_KEY, LLM_BASE_URL and LLM_MODEL. Restart backend/worker after environment changes. Demo seeding is disabled in live mode. Existing local demo users are not a production identity system.
+Use your actual repository, Jira project key and board ID. This command preserves existing organizations and rejects duplicate emails/repositories. A project setup UI is not yet included. Set MODE=live, GITHUB_TOKEN (read access to the configured repository), GITHUB_WEBHOOK_SECRET, JIRA_URL (HTTPS Jira Cloud site), JIRA_EMAIL, JIRA_TOKEN, JIRA_WEBHOOK_SECRET, LLM_PROVIDER=demo for the first real-data test, with LLM_INFERENCE_ENABLED=false. Model credentials/settings can be prepared separately; real inference requires explicit enablement after approval. Restart backend/worker after environment changes. Demo seeding is disabled in live mode. Existing local demo users are not a production identity system.
 
 Configure GitHub pull_request webhooks at `/api/webhooks/github`, with the same signing secret. For Jira, configure an Automation rule to POST issue identity JSON to `/api/webhooks/jira/{project_id}`, with `Authorization: Bearer <JIRA_WEBHOOK_SECRET>` and a stable unique `X-Delivery-ID` for that occurrence. Jira native unverified webhooks are unsupported. Local loopback endpoints are not internet accessible; no public deployment or tunnel is configured.
 
-All integrations are read-only. The platform never approves/merges PRs or modifies Jira issues. Failures and rate limiting enter bounded retries. See docs/architecture.md for provider pagination, authentication and worker limits.
+All integrations are read-only. The platform never approves/merges PRs or modifies Jira issues. Transient failures and rate limiting enter bounded retries; configuration and permission failures terminate safely. See [integration setup](docs/integrations.md) for Jira mappings, pagination, provider delays and a read-only smoke check.
 
 ## Evaluation
 
@@ -164,3 +164,5 @@ docker compose exec -T backend ruff check .
 ```
 
 This captures existing resolved frontend/browser packages and backend versions without re-resolution. Backend Docker/CI install the frozen requirements followed by the local package with --no-deps and pip check; frontend/browser builds use npm ci. Do not reuse the Linux backend snapshot directly on macOS. The locks pin package versions but do not pin container base image digests or provide Python wheel hashes.
+
+For real GitHub/Jira data with deterministic local inference, use [live workflow verification](docs/live-workflow-verification.md). The verifier checks actual node observations, PostgreSQL persistence, permissions, signed delivery deduplication and browser display without paid inference.

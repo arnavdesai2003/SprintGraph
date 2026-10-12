@@ -14,7 +14,7 @@ server.on('error', error => {
   process.exit(1);
 });
 server.listen(8000, '127.0.0.1', () => {
-  const child = spawn('npx', ['playwright', 'test'], { stdio: 'inherit' });
+  const child = spawn('npx', ['playwright', 'test', process.env.SPRINTGRAPH_LIVE_BROWSER === '1' ? 'tests/live-workflows.spec.ts' : 'tests/dashboard.spec.ts'], { stdio: 'inherit' });
   child.on('error', () => { server.close(); process.exitCode = 1; });
   child.on('exit', code => { server.close(); process.exitCode = code ?? 1; });
   for (const signal of ['SIGINT', 'SIGTERM']) {

@@ -5,9 +5,9 @@
 | 1 | Repository, application scaffolds, Docker, health checks, setup docs | Complete: application foundation verified and Git initialized in the user terminal. |
 | 2 | Schemas, migrations, seed fixtures, verified ingestion, persistence, deduplication | Complete: schemas, seed, ingestion and deduplication verified; all 51 PostgreSQL tests and Ruff passed. |
 | 3 | Typed executable LangGraph and four workflows | Complete: 77 PostgreSQL tests, Ruff, rebuilt demo and deployed end-to-end verification passed. |
-| 4 | Demo/live GitHub and Jira adapters | Demo adapters verified. Live credentials and provider verification remain external configuration. |
+| 4 | Demo/live GitHub and Jira adapters | Complete for local MVP: 99 tests plus 12 subtests, Ruff, rebuilt demo verification and read-only adapter check passed. Real-provider connectivity remains unverified. |
 | 5 | Authentication, RBAC, audit logs and API-backed dashboard | Local demo API/browser acceptance passed. Production identity hardening remains separate. |
-| 6 | Tests, CI, observability and evaluation | 77 PostgreSQL backend tests, four browser tests, Ruff and measured 400-event synthetic run passed. CI itself has not run. |
+| 6 | Tests, CI, observability and evaluation | 99 PostgreSQL backend tests plus 12 subtests, four browser tests, Ruff and measured 400-event synthetic run passed. CI itself has not run. |
 
 Implementation advanced through the phases before this explicit acceptance audit. Do not redo verified code or infer live production verification from demo results. No public deployment, paid infrastructure or external mutations.
 
@@ -37,3 +37,9 @@ User-run isolated PostgreSQL suite passed 77 tests in 6.41s; Ruff passed without
 
 ## Phase 3 complete
 The updated deployed verifier passed all nine checks. Events 423–427 succeeded on their first attempt across all four workflows, with persisted dashboard results and completion audits. Together with 77 PostgreSQL tests and clean Ruff, this completes Phase 3 local acceptance. Live-provider acceptance remains Phase 4 work.
+
+## Phase 4 local acceptance complete
+User-run suite passed 99 tests and 12 subtests in 7.97s, with clean Ruff. Rebuilt services passed all nine demo verification checks; events 428–432 succeeded on their first attempt. The read-only adapter check retrieved PR 42 (two files, one commit) and four sprint issues with zero LLM calls. Live adapters are validated using mocked HTTP; real-provider connectivity requires separately configured credentials and resources.
+
+## Current increment: real-data LangGraph acceptance
+Implement live integrations with demo inference, observed node audits and disabled real inference. Validate actual API/worker/PostgreSQL/dashboard results for project 2, PR 2 and sprint 3 without external mutations or database reset. Real workflow acceptance passed for events 433–435 and the live browser test passed in 675ms. Updated full backend regression-suite/Ruff acceptance remains pending its separate result. Real inference remains disabled.

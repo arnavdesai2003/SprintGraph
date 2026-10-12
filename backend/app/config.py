@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Annotated
+from typing import Annotated, Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -15,7 +15,13 @@ class Settings(BaseSettings):
     jira_url: str = ''
     jira_email: str = ''
     jira_token: str = ''
-    llm_provider: str = 'demo'
+    jira_issue_api: Literal['enhanced', 'legacy'] = 'enhanced'
+    jira_sprint_id: int | None = Field(default=None, gt=0)
+    jira_status_map: dict[str, str] = Field(default_factory=dict)
+    jira_severity_field: str = Field(default='', pattern=r'^(customfield_[0-9]+)?$')
+    jira_severity_map: dict[str, Annotated[int, Field(ge=0, le=10, strict=True)]] = Field(default_factory=dict)
+    llm_provider: Literal['demo', 'openai-compatible'] = 'demo'
+    llm_inference_enabled: bool = False
     llm_base_url: str = 'https://api.openai.com/v1'
     llm_api_key: str = ''
     llm_model: str = 'gpt-4.1-mini'
@@ -32,6 +38,4 @@ def settings():
         raise ValueError('JWT_SECRET must contain at least 32 characters')
     if value.mode not in {'demo', 'live'}:
         raise ValueError('MODE must be demo or live')
-    if value.mode == 'live' and value.llm_provider == 'demo':
-        raise ValueError('Live mode requires a configured LLM provider')
     return value

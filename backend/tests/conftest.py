@@ -38,6 +38,7 @@ os.environ['GITHUB_WEBHOOK_SECRET'] = 'test-webhook-secret'
 os.environ['JIRA_WEBHOOK_SECRET'] = 'test-jira-secret'
 os.environ['MODE'] = 'demo'
 os.environ['LLM_PROVIDER'] = 'demo'
+os.environ['LLM_INFERENCE_ENABLED'] = 'false'
 from app.db import engine, Session  # noqa: E402
 from app.models import Base  # noqa: E402
 from app.main import app  # noqa: E402

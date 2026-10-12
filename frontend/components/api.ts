@@ -60,6 +60,7 @@ export type Activity = {
     error?: string;
     executions: {
         id: number;
+        trace?: { nodes: { node: string; status: string; duration_ms: number }[]; integration_mode: string; llm_provider: string };
         duration_ms?: number;
         result?: Result;
         error?: string;

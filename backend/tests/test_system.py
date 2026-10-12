@@ -140,15 +140,20 @@ def test_provider_failure_is_safe(monkeypatch):
 
 def test_failed_ai_request(monkeypatch):
     monkeypatch.setattr(settings(), 'llm_provider', 'openai-compatible')
+    monkeypatch.setattr(settings(), 'llm_inference_enabled', True)
     monkeypatch.setattr(settings(), 'llm_api_key', 'unit-test-only')
     async def fail(*args, **kwargs):
         raise httpx.ConnectError('private')
     monkeypatch.setattr(httpx.AsyncClient, 'post', fail)
-    with pytest.raises(ProviderError, match='structured output'):
+    with pytest.raises(ProviderError, match='LLM connection failed; retry later') as exc:
         asyncio.run(describe({}, {'summary': 'test'}))
+    assert exc.value.retryable
+    assert 'private' not in str(exc.value)
+    assert 'unit-test-only' not in str(exc.value)
 
 def test_invalid_ai_output(monkeypatch):
     monkeypatch.setattr(settings(), 'llm_provider', 'openai-compatible')
+    monkeypatch.setattr(settings(), 'llm_inference_enabled', True)
     monkeypatch.setattr(settings(), 'llm_api_key', 'unit-test-only')
     async def invalid(*args, **kwargs):
         return httpx.Response(200, request=httpx.Request('POST', 'https://example.invalid'), json={'choices': [{'message': {'content': '{"summary": 42}'}}]})
