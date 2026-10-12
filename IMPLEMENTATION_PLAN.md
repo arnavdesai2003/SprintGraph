@@ -49,3 +49,6 @@ Require exp/sub claims and valid positive user subjects, reject unknown database
 
 ## Phase 6 local acceptance
 Complete for local MVP: 137 PostgreSQL tests plus 24 subtests, Ruff, four isolated demo browser tests and controlled 400-event synthetic evaluation passed. Dashboard/evaluation metrics agree. CI uses PostgreSQL explicitly; remote Actions execution remains unverified until changes are pushed and its run is inspected. Reproduce isolated demo validation with infra/compose.demo-test.yaml; do not evaluate the live deployment.
+
+## Hosted CI verified
+GitHub Actions run 38294481952 for Phase 6 commit dd7b38b completed successfully on 2026-10-12: backend, frontend and browser jobs all passed. Phases 1–6 local MVP and hosted CI acceptance are complete. Earlier pending CI notes above are historical.

@@ -88,3 +88,5 @@ Phase 5 validation on 2026-10-12 was executed directly after session Docker acce
 
 ### Phase 6 observability consistency and isolated acceptance
 Authorized overview responses use services.metrics.summarize_events, matching evaluation nearest-rank percentiles and explicit handling/attempt/workflow metrics. GitHub CI pytest selects its dedicated PostgreSQL _test database rather than falling back to SQLite. A Compose override enables separate demo project acceptance on 3100/8100; all backend processes force demo providers and disabled real inference. Controlled evaluation stops that project's worker. Validation does not reset or process the live database. Local suite/browser/evaluation acceptance passed on 2026-10-12; hosted CI execution is still unverified.
+
+Hosted Phase 6 CI was verified on 2026-10-12: Actions run 38294481952 for commit dd7b38b completed with backend, frontend and browser jobs successful. No production deployment or ongoing inference was enabled.
